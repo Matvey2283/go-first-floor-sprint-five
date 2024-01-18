@@ -127,10 +127,21 @@ type Walking struct {
 // ((0.035 * вес_спортсмена_в_кг + (средняя_скорость_в_метрах_в_секунду**2 / рост_в_метрах)
 // * 0.029 * вес_спортсмена_в_кг) * время_тренировки_в_часах * мин_в_ч)
 // Это переопределенный метод Calories() из Training.
+// Calories возвращает количество потраченных килокалорий при ходьбе.
 func (w Walking) Calories() float64 {
-    // вставьте ваш код ниже
-    return ((CaloriesWeightMultiplier * w.Weight) + (math.Pow(w.meanSpeed(), 2) / w.Height * CaloriesSpeedHeightMultiplier * w.Weight)) * w.Duration.Hours() * MinInHours
+	// Переводим рост из сантиметров в метры
+	heightInMeters := w.Height / 100
+
+	// Переводим среднюю скорость в м/с
+	speedMetersPerSec := w.meanSpeed() * KmHInMsec
+
+	// Подсчет калорий по скорректированной формуле
+	calories := ((CaloriesWeightMultiplier * w.Weight) + (math.Pow(speedMetersPerSec, 2) / heightInMeters * CaloriesSpeedHeightMultiplier * w.Weight)) * w.Duration.Hours() * MinInHours
+
+	return calories
 }
+
+
 
 
 
@@ -165,11 +176,19 @@ type Swimming struct {
 // Формула расчета:
 // длина_гребка * количество_гребков / м_в_км / продолжительность_тренировки
 func (s Swimming) meanSpeed() float64 {
-	return float64(s.LenStep * float64(s.Action)) / MInKm / s.Duration.Hours()
+	if s.Duration.Hours() != 0 {
+		return float64(s.LengthPool) * float64(s.CountPool) / MInKm / s.Duration.Hours()
+	}
+	return 0
 }
 
 
 func (s Swimming) Calories() float64 {
+	// Проверка на нулевую продолжительность тренировки.
+	if s.Duration.Hours() == 0 {
+		return 0
+	}
+
 	// Сначала найдем среднюю скорость в км/ч (длина_бассейна_в_метрах * количество_пересечений / м_в_км / время_тренеровки_в_часах)
 	averageSpeed := float64(s.LengthPool * s.CountPool) / MInKm / s.Duration.Hours()
 
@@ -178,6 +197,7 @@ func (s Swimming) Calories() float64 {
 
 	return calories
 }
+
 
 
 
